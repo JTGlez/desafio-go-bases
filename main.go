@@ -8,7 +8,8 @@ import (
 
 func main() {
 	// LoadTicketData
-	store, err := tickets.LoadTicketData("tickets.csv")
+	loader := tickets.CSVLoader{}
+	store, err := loader.LoadTickets("tickets.csv")
 
 	if len(err) != 0 {
 		fmt.Println("Error loading ticket data:")
@@ -17,23 +18,23 @@ func main() {
 		}
 	}
 
-	store.Print()
+	fmt.Println(store)
 
 	// GetTotalTickets
-	country := "Tibecuador"
+	country := "Mexico"
 	total, err := store.GetTotalTickets(country)
-
 	if err != nil {
 		fmt.Println(err)
-	} else {
-		fmt.Printf("Total tickets to %s: %d\n", country, total)
+		return
 	}
+	fmt.Printf("Total tickets to %s: %d\n", country, total)
 
 	// CountByTimeOfDay
-	madrugada, manana, tarde, noche := store.CountByTimeOfDay()
+	earlyMorning, morning, afternoon, night := store.CountByTimeOfDay()
 	fmt.Printf("Tickets by time of day:\n")
-	fmt.Printf("Madrugada (0-6): %d\n", madrugada)
-	fmt.Printf("Mañana (7-12): %d\n", manana)
-	fmt.Printf("Tarde (13-19): %d\n", tarde)
-	fmt.Printf("Noche (20-23): %d\n", noche)
+	fmt.Printf("Early Morning (0-6): %d\n", earlyMorning)
+	fmt.Printf("Morning (7-12): %d\n", morning)
+	fmt.Printf("Afternoon (13-19): %d\n", afternoon)
+	fmt.Printf("Night (20-23): %d\n", night)
+
 }

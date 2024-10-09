@@ -1,13 +1,9 @@
 package tickets
 
 import (
-	"encoding/csv"
 	"errors"
 	"fmt"
-	"log"
-	"os"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -20,6 +16,13 @@ type Ticket struct {
 	Price       float64
 }
 
+type TicketStore map[int]Ticket
+
+type TicketLoader interface {
+	LoadTickets(filename string) (TicketStore, []error)
+	ParseRecord(record []string) (Ticket, error)
+}
+
 var (
 	ErrorMissingFile       = errors.New("missing tickets file")
 	ErrorInvalidLineFormat = errors.New("invalid line format")
@@ -29,69 +32,7 @@ var (
 	ErrorNoTicketsFound    = errors.New("no tickets found for the specified destination")
 )
 
-type TicketStore map[int]Ticket
-
-func parseRecord(record []string) (Ticket, error) {
-	if len(record) != 6 {
-		return Ticket{}, fmt.Errorf("%w: record has %d fields, expected 6", ErrorInvalidLineFormat, len(record))
-	}
-
-	_, err := strconv.Atoi(record[0])
-	if err != nil {
-		return Ticket{}, fmt.Errorf("%w: %v", ErrorInvalidID, record[0])
-	}
-
-	flightTime, err := time.Parse("15:04", record[4])
-	if err != nil {
-		return Ticket{}, fmt.Errorf("%w: %v", ErrorInvalidFlightTime, err)
-	}
-
-	price, err := strconv.ParseFloat(record[5], 64)
-	if err != nil {
-		return Ticket{}, fmt.Errorf("%w: %v", ErrorInvalidPrice, err)
-	}
-
-	return Ticket{
-		Name:        record[1],
-		Email:       record[2],
-		Destination: record[3],
-		FlightTime:  flightTime,
-		Price:       price,
-	}, nil
-}
-
-func LoadTicketData(filename string) (TicketStore, []error) {
-	file, err := os.Open(filename)
-	if err != nil {
-		return nil, []error{ErrorMissingFile}
-	}
-	defer file.Close()
-
-	reader := csv.NewReader(file)
-	records, err := reader.ReadAll()
-	if err != nil {
-		return nil, []error{err}
-	}
-
-	ts := make(TicketStore)
-	var errors []error
-
-	for i, record := range records {
-		ticket, err := parseRecord(record)
-		if err != nil {
-			log.Printf("error parsing record %d: %v\n", i, err)
-			errors = append(errors, err)
-			continue
-		}
-
-		id, _ := strconv.Atoi(record[0])
-		ts[id] = ticket
-	}
-
-	return ts, errors
-}
-
-func (ts TicketStore) Print() {
+func (ts TicketStore) Stringer() {
 
 	keys := make([]int, 0, len(ts))
 
@@ -124,20 +65,18 @@ func (ts TicketStore) GetTotalTickets(destination string) (total int, err []erro
 	return
 }
 
-// ejemplo 2
-func (ts TicketStore) CountByTimeOfDay() (madrugada, manana, tarde, noche int) {
-
+func (ts TicketStore) CountByTimeOfDay() (earlyMorning, morning, afternoon, night int) {
 	for _, ticket := range ts {
 		hour := ticket.FlightTime.Hour()
 		switch {
 		case hour >= 0 && hour < 7:
-			madrugada++
+			earlyMorning++
 		case hour >= 7 && hour < 13:
-			manana++
+			morning++
 		case hour >= 13 && hour < 20:
-			tarde++
+			afternoon++
 		case hour >= 20 && hour <= 24:
-			noche++
+			night++
 		}
 	}
 	return
