@@ -1,54 +1,55 @@
 package tickets
 
 import (
-	"bufio"
 	"encoding/json"
+	"fmt"
 	"os"
+	"time"
 )
 
 type JSONLoader struct{}
 
 func (j JSONLoader) LoadTickets(filename string) (TicketStore, []error) {
-	file, err := os.Open(filename)
+	file, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, []error{ErrorMissingFile}
 	}
 
-	defer func(file *os.File) {
-		err := file.Close()
-		if err != nil {
-			panic(err)
-		}
-	}(file)
-
-	var jsonData []byte
-
-	scanner := bufio.NewScanner(file)
-
-	for scanner.Scan() {
-		jsonData = append(jsonData, scanner.Bytes()...)
-	}
-
-	if err := scanner.Err(); err != nil {
-		return nil, []error{err}
-	}
-
 	var tickets []Ticket
-	err = json.Unmarshal(jsonData, &tickets)
-	if err != nil {
-		return nil, []error{err}
+	if err2 := json.Unmarshal(file, &tickets); err2 != nil {
+		return nil, []error{err2}
 	}
 
 	ts := make(TicketStore)
-
-	for i, ticket := range tickets {
-		ts[i+1] = ticket
+	for _, ticket := range tickets {
+		ts[ticket.ID] = ticket
 	}
 
 	return ts, nil
 }
 
-// ParseRecord Leftover: we can use unmarshal to directly to parse json data
 func (j JSONLoader) ParseRecord(record []string) (Ticket, error) {
 	return Ticket{}, nil
+}
+
+func (t *Ticket) UnmarshalJSON(data []byte) error {
+	type Alias Ticket
+	aux := &struct {
+		FlightTime string `json:"flight_time"`
+		*Alias
+	}{
+		Alias: (*Alias)(t),
+	}
+
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+
+	flightTime, err := time.Parse("15:04", aux.FlightTime)
+	if err != nil {
+		return fmt.Errorf("%w: %v", ErrorInvalidFlightTime, err)
+	}
+	t.FlightTime = flightTime
+
+	return nil
 }

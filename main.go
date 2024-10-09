@@ -34,7 +34,7 @@ func main() {
 	fmt.Println("JSON Store:", jsonStore)
 
 	// GetTotalTickets from JSON store
-	country := "Mexico"
+	country := "Finland"
 	total, err := jsonStore.GetTotalTickets(country)
 	if err != nil {
 		fmt.Println(err)

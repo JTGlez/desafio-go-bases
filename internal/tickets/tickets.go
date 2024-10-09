@@ -9,11 +9,12 @@ import (
 )
 
 type Ticket struct {
-	Name        string
-	Email       string
-	Destination string
-	FlightTime  time.Time
-	Price       float64
+	ID          int       `json:"id"`
+	Name        string    `json:"name"`
+	Email       string    `json:"email"`
+	Destination string    `json:"destination"`
+	FlightTime  time.Time `json:"flight_time"`
+	Price       float64   `json:"price"`
 }
 
 type TicketStore map[int]Ticket
@@ -33,15 +34,11 @@ var (
 )
 
 func (ts TicketStore) Stringer() {
-
 	keys := make([]int, 0, len(ts))
-
 	for k := range ts {
 		keys = append(keys, k)
 	}
-
 	sort.Ints(keys)
-
 	for _, k := range keys {
 		fmt.Printf("%d: %v\n", k, ts[k])
 	}
