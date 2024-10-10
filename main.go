@@ -18,7 +18,7 @@ func main() {
 		}
 	}
 
-	fmt.Println("CSV Store:", csvStore)
+	fmt.Println(csvStore)
 
 	// LoadTicketData from JSON
 	jsonLoader := tickets.JSONLoader{}
@@ -30,8 +30,7 @@ func main() {
 			fmt.Println(err)
 		}
 	}
-	fmt.Println("\n \n")
-	fmt.Println("JSON Store:", jsonStore)
+	fmt.Println(jsonStore)
 
 	// GetTotalTickets from JSON store
 	country := "Finland"
@@ -41,6 +40,14 @@ func main() {
 		return
 	}
 	fmt.Printf("Total tickets to %s: %d\n", country, total)
+
+	// AverageDestination from JSON store
+	percentage, err := jsonStore.AverageDestination(country)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Printf("Percentage of tickets to %s: %.2f%%\n", country, percentage)
 
 	// CountByTimeOfDay from JSON store
 	earlyMorning, morning, afternoon, night := jsonStore.CountByTimeOfDay()
